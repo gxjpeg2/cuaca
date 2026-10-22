@@ -74,6 +74,7 @@ def _tolak(jenis, lokasi, waktu, alasan, nilai):
 def ubah_payload(payload):
     """Pecah satu respons jadi (bersih, ditolak, jumlah_jam_kosong, jumlah_terlewat).
 
+    Jam kosong adalah jam tanpa data, atau jam aktual yang belum terjadi saat data diambil.
     Jam terlewat adalah jam prakiraan yang sudah lewat saat data diambil.
     """
     lokasi = payload["lokasi"]
@@ -91,6 +92,10 @@ def ubah_payload(payload):
             continue
 
         if all(v is None for v in mentah.values()):
+            kosong += 1
+            continue
+        if jenis == "aktual" and waktu > prediksi:
+            # Belum terjadi. Archive bisa mengisi jam ini dengan estimasi model, bukan data aktual.
             kosong += 1
             continue
         if jenis == "prakiraan" and waktu < prediksi:

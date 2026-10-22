@@ -28,8 +28,8 @@ def _jumlah_valid(run):
 def periksa(riwayat, sekarang, maks_umur_jam=26, maks_rasio=0.2, maks_turun=0.3, maks_umur_data_hari=8):
     """Hasilnya daftar (level, pesan) dengan level OK, WARNING, atau CRITICAL.
 
-    maks_umur_data_hari bawaannya 8, karena data aktual (archive) di sumbernya tertinggal
-    beberapa hari dari hari ini.
+    maks_umur_data_hari bawaannya 8, memberi ruang kalau sumber terlambat memperbarui
+    data aktual (archive).
     """
     if not riwayat:
         return [("CRITICAL", "Belum ada riwayat run: pipeline belum pernah jalan?")]

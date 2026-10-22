@@ -149,10 +149,10 @@ Kalau mengubah `PGPASSWORD` setelah volume database dibuat, hapus volume (`docke
 - Nilai `null` berarti tidak ada data. Jam yang semuanya `null` dilewati, dan `null` tidak menimpa nilai tersimpan.
 - Kunci data aktual: (kota, `waktu_utc`). Angka yang direvisi memperbarui fakta dan tercatat di `cuaca_revisi`.
 - Potongan aktual yang berakhir lebih dari 90 hari lalu dianggap final dan di-cache. Angka 90 adalah pilihan project ini, ubah lewat `HARI_FINAL` di `extract.py`. Prakiraan tidak pernah di-cache.
-- Prakiraan yang jamnya sudah lewat saat diambil dibuang.
+- Prakiraan yang jamnya sudah lewat saat diambil dibuang. Sebaliknya, jam aktual yang belum terjadi juga dibuang, karena archive bisa mengisinya dengan estimasi model.
 - `waktu_prediksi` adalah waktu pipeline mengambil data (dibulatkan ke jam), bukan waktu model dijalankan, karena sumber tidak memberikannya.
 - Run kedua dalam jam yang sama tidak menambah potret prakiraan. Potret pertama dipertahankan.
-- Perbandingan prakiraan dan aktual memakai data reanalisis. Pasangan baru muncul beberapa hari setelah prakiraan dibuat.
+- Perbandingan prakiraan dan aktual memakai data reanalisis. Pasangan baru muncul setelah jam target lewat dan data aktualnya masuk.
 - Tabel `karantina` bertambah tiap run, termasuk untuk jam rusak yang sama.
 - CSV memakai koma. Excel berbahasa Indonesia sering membacanya jadi satu kolom, pakai Data, From Text/CSV.
 - Port bawaan (5432, 8000, 8080) bisa bentrok dengan project lain. Hentikan yang satu atau ubah `PGPORT` di `.env`.

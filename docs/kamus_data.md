@@ -116,7 +116,7 @@ Grain: 1 kota per kelompok jarak prakiraan. Hanya memuat jam yang punya prakiraa
 | `bias_suhu_c` | rata-rata selisih bertanda (prakiraan dikurangi aktual). Positif berarti prakiraan cenderung lebih panas |
 | `mae_hujan_mm` | rata-rata selisih mutlak curah hujan per jam |
 
-Karena data aktual tertinggal beberapa hari, view ini kosong atau sedikit isinya untuk prakiraan yang masih baru.
+Data aktual baru dipakai setelah jam targetnya lewat, jadi view ini kosong atau sedikit isinya untuk prakiraan yang masih baru.
 
 ## cuaca_revisi
 

@@ -319,6 +319,13 @@ class TestUbahPayload(unittest.TestCase):
         self.assertEqual((len(bersih), terlewat), (1, 0))
 
 
+    def test_data_aktual_setelah_waktu_pengambilan_dibuang(self):
+        waktu = ["2026-10-14T05:00", "2026-10-14T06:00", "2026-10-14T07:00"]
+        bersih, ditolak, kosong, _ = ubah_payload(payload("aktual", waktu=waktu))
+        self.assertEqual([r["waktu_utc"].hour for r in bersih], [5, 6])
+        self.assertEqual((kosong, ditolak), (1, []))
+
+
 class TestTransform(unittest.TestCase):
     def test_hasil_berisi_aktual_prakiraan_dan_lokasi(self):
         bersih, ditolak = transform([payload("aktual"), payload("prakiraan", waktu=["2026-10-14T08:00"])])
@@ -346,7 +353,8 @@ class TestTransform(unittest.TestCase):
     def test_ditolak_di_bawah_batas_tetap_lanjut(self):
         waktu = [f"2026-10-14T{j:02d}:00" for j in range(10)]
         hum = [150] + [80] * 9
-        bersih, ditolak = transform([payload(waktu=waktu, relative_humidity_2m=hum)])
+        sore = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+        bersih, ditolak = transform([payload(waktu=waktu, relative_humidity_2m=hum, diambil_pada=sore)])
         self.assertEqual((len(bersih["aktual"]), len(ditolak)), (9, 1))
 
     def test_log_contoh_dibatasi(self):
@@ -684,7 +692,9 @@ class TestMart(ButuhPostgres):
 
     def test_mart_akurasi_memasangkan_prakiraan_dengan_data_aktual(self):
         with simulasi(maju=5) as url:
+            # Prakiraan diambil tengah malam. Data aktual hari itu baru lengkap di run berikutnya.
             muat(url, lokasi=("Bandung", "Jakarta"), sekarang=datetime(2026, 10, 14, 0, 0, tzinfo=timezone.utc))
+            muat(url, lokasi=("Bandung", "Jakarta"), sekarang=datetime(2026, 10, 15, 0, 0, tzinfo=timezone.utc))
         baris = ambil("SELECT lokasi, kelompok_jarak, jumlah_pasangan, mae_suhu_c FROM mart_akurasi_prakiraan ORDER BY lokasi")
         self.assertEqual([(r[0], r[1], r[2]) for r in baris], [("Bandung", "0-23 jam", 24), ("Jakarta", "0-23 jam", 24)])
         self.assertTrue(all(r[3] is not None and r[3] >= 0 for r in baris))

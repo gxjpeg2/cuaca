@@ -12,7 +12,7 @@ Pipeline ETL untuk data cuaca per jam di 12 kota Indonesia. Mengambil data dari 
 
 | Jenis | Endpoint | Catatan |
 |---|---|---|
-| Aktual | archive | Reanalisis berbasis model, bukan pengukuran stasiun. Tertinggal beberapa hari dan bisa direvisi. |
+| Aktual | archive | Reanalisis berbasis model, bukan pengukuran stasiun. Nilai hari terbaru bisa direvisi. Jam yang belum terjadi dibuang. |
 | Prakiraan | forecast | Tiap run disimpan sebagai potret terpisah, tidak menimpa run lama. |
 
 Satu run penuh memakai 24 permintaan (2 per kota) dengan jeda 1 detik. Data berlisensi CC BY 4.0, cantumkan Open-Meteo sebagai sumber. API gratisnya untuk penggunaan non-komersial.
