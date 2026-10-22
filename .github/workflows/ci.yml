@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cuaca
+          POSTGRES_PASSWORD: cuaca
+          POSTGRES_DB: cuaca_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cuaca -d cuaca_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: cuaca
+      PGPASSWORD: cuaca
+      CUACA_TEST_DB: cuaca_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Tes dengan coverage
+        run: |
+          coverage run -m unittest discover -s tests -v
+          coverage report
+      - name: Tipe (mypy)
+        run: mypy
+      - name: Validasi docker-compose.yml
+        run: |
+          cp .env.example .env
+          docker compose --profile app --profile airflow --profile simulasi config -q

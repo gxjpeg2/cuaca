@@ -1,0 +1,13 @@
+lokasi,kelompok_jarak,jumlah_pasangan,mae_suhu_c,bias_suhu_c,mae_hujan_mm
+Balikpapan,0-23 jam,1,0.40,-0.40,0.00
+Bandung,0-23 jam,1,0.20,-0.20,0.00
+Denpasar,0-23 jam,1,1.10,-1.10,0.00
+Jakarta,0-23 jam,1,0.40,-0.40,0.00
+Jayapura,0-23 jam,1,0.50,0.50,0.00
+Makassar,0-23 jam,1,0.40,-0.40,0.00
+Medan,0-23 jam,1,1.50,1.50,0.00
+Palembang,0-23 jam,1,0.50,-0.50,0.00
+Pontianak,0-23 jam,1,0.20,0.20,0.00
+Semarang,0-23 jam,1,0.30,0.30,0.00
+Surabaya,0-23 jam,1,0.20,-0.20,0.00
+Yogyakarta,0-23 jam,1,1.00,1.00,0.00

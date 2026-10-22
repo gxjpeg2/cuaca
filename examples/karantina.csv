@@ -1,0 +1,2 @@
+jenis,lokasi,waktu_utc,alasan,nilai_mentah
+aktual,Pontianak,2026-10-20T12:00,kelembapan_persen di luar batas (150),"{""suhu_c"": 32.2, ""kelembapan_persen"": 150, ""curah_hujan_mm"": 0.0, ""kecepatan_angin_kmh"": 6.4, ""tekanan_hpa"": 1009.5, ""kode_cuaca"": 3}"

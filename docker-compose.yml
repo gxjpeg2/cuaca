@@ -1,0 +1,160 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  image: cuaca-airflow:3.3.1
+  profiles: ["airflow"]
+  user: "${AIRFLOW_UID:-50000}:0"
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD:-airflow}@airflow-db/airflow
+    AIRFLOW__API_AUTH__JWT_SECRET: "${AIRFLOW_JWT_SECRET:?isi AIRFLOW_JWT_SECRET di .env, bikin dengan: openssl rand -hex 32}"
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+    OPEN_METEO_FORECAST_URL: ${OPEN_METEO_FORECAST_URL:-https://api.open-meteo.com/v1/forecast}
+    OPEN_METEO_ARCHIVE_URL: ${OPEN_METEO_ARCHIVE_URL:-https://archive-api.open-meteo.com/v1/archive}
+    CUACA_REPO: /opt/cuaca
+    PYTHONPATH: /opt/cuaca
+    LOG_DIR: /opt/cuaca-logs
+    FOLDER_OUTPUT: /opt/airflow/data/output
+    FOLDER_MENTAH: /opt/airflow/data/mentah
+    PGHOST: db
+    PGPORT: "5432"
+    PGDATABASE: ${PGDATABASE:-cuaca}
+    PGUSER: ${PGUSER:-cuaca}
+    PGPASSWORD: ${PGPASSWORD:-cuaca}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./cuaca:/opt/cuaca/cuaca:ro
+    - ./output:/opt/airflow/data/output
+    - ./data/mentah:/opt/airflow/data/mentah
+    - ./logs:/opt/cuaca-logs
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    airflow-db:
+      condition: service_healthy
+    db:
+      condition: service_healthy
+    airflow-init:
+      condition: service_completed_successfully
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-cuaca}
+      POSTGRES_USER: ${PGUSER:-cuaca}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-cuaca}
+    ports:
+      - "127.0.0.1:${PGPORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    env_file: .env
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+    profiles: ["app"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+      - ./data:/app/data
+
+  simulasi:
+    build: .
+    command: ["python", "-m", "simulasi", "--host", "0.0.0.0", "--interval", "${SIMULASI_INTERVAL:-60}"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    profiles: ["simulasi"]
+
+  test:
+    build: .
+    env_file: .env
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      CUACA_TEST_DB: ${CUACA_TEST_DB:-cuaca_test}
+    profiles: ["app"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./tests:/app/tests:ro
+    command: ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]
+
+  airflow-db:
+    image: postgres:16-alpine
+    profiles: ["airflow"]
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow}
+    volumes:
+      - airflow-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command: -c "exec /entrypoint airflow version"
+    environment:
+      <<: *airflow-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USER:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-airflow}
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    restart: on-failure
+
+volumes:
+  pgdata:
+  airflow-pgdata:
+  airflow-logs:
