@@ -7,6 +7,8 @@ Hourly weather ETL pipeline for 12 Indonesian cities. It pulls actuals and forec
 Pipeline ETL untuk data cuaca per jam di 12 kota Indonesia. Mengambil data dari [Open-Meteo](https://open-meteo.com), memvalidasinya, menyimpannya ke PostgreSQL sebagai tabel fakta dan dimensi, dan menulis enam CSV. Bisa dijadwalkan harian lewat Airflow.
 
 ![Alur pipeline](docs/gambar/alur.svg)
+![DAG Airflow](docs/gambar/airflow-dag-hijau.png)
+![Tabel mart](docs/gambar/tabel-postgres.png)
 
 ## Data
 
